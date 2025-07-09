@@ -1,0 +1,18 @@
+{
+    "Required": [
+        "Date",
+        "Time", 
+        "Team",
+        "Location",
+        "Notes",
+        "Status"
+    ],
+    "defaults": {
+        "Location": "Main Arena",
+        "Notes": "",
+        "Status": "Scheduled"
+    },
+    "Mapping": {
+        "Start Time": "Time"
+    }
+} 

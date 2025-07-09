@@ -1,0 +1,20 @@
+{
+    "Format": {
+        "Date": "%m/%d/%Y",
+        "Time": "%I:%M %p",
+        "Duration": "H:MM"
+    },
+    "Block Detection": {
+        "start_marker": "Date",
+        "skip_meta_rows": true,
+        "meta_patterns": ["ice", "time", "header", "day", "week", "note", "info"]
+    },
+    "Missing Values": {
+        "Omit": true,
+        "Replacement": "missing"
+    },
+    "Split": {
+        "Skip": false,
+        "Separator": "/"
+    }
+} 

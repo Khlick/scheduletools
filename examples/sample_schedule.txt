@@ -1,0 +1,6 @@
+Monday		Tuesday			
+Date	Time	Date	Time		
+	6 pm - 7:15 pm		6:00 pm - 7:00 pm	7:00 pm - 8:00 pm	8:15 pm - 9:15 pm
+7/21/2025	16U / 18U	7/22/2025	12U / 14U	18U	16U
+7/28/2025	16U / 18U	7/29/2025	8U / 10U	18U	16U
+8/4/2025	16U / 18U	8/5/2025	12U / 14U	18U	16U 
