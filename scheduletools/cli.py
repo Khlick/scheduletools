@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 import json
 
-from .core import ScheduleParser, CSVSplitter, ScheduleExpander
+from .core import ScheduleParser, ScheduleSplitter, ScheduleExpander
 from .exceptions import ScheduleToolsError
 
 
@@ -106,7 +106,7 @@ def split(input_csv: Path, groupby: str, filter: Optional[str],
     
     INPUT_CSV: Path to the input CSV file to split
     """
-    splitter = CSVSplitter(input_csv, groupby, filter, exclude)
+    splitter = ScheduleSplitter(input_csv, groupby, filter, exclude)
     split_data = splitter.split()
     
     if not split_data:
@@ -180,7 +180,7 @@ def process(input_csv: Path, output: Optional[Path], template: Optional[Path]):
         group_col = available_columns[0]
         click.echo(f"Auto-selected grouping column: {group_col}")
         
-        splitter = CSVSplitter(input_csv, group_col)
+        splitter = ScheduleSplitter(input_csv, group_col)
         split_data = splitter.split()
         
         if output is None:

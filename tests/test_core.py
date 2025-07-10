@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 import json
 
-from scheduletools import ScheduleParser, CSVSplitter, ScheduleExpander
+from scheduletools import ScheduleParser, ScheduleSplitter, ScheduleExpander
 from scheduletools.exceptions import (
     ScheduleToolsError, 
     ParsingError, 
@@ -275,8 +275,8 @@ class TestScheduleParser:
 
 
 
-class TestCSVSplitter:
-    """Test CSVSplitter functionality."""
+class TestScheduleSplitter:
+    """Test ScheduleSplitter functionality."""
     
     def setup_method(self):
         """Set up test data."""
@@ -288,7 +288,7 @@ class TestCSVSplitter:
     
     def test_split_by_single_column(self):
         """Test splitting by a single column."""
-        splitter = CSVSplitter(self.test_data, "Team")
+        splitter = ScheduleSplitter(self.test_data, "Team")
         result = splitter.split()
         
         assert len(result) == 3
@@ -301,7 +301,7 @@ class TestCSVSplitter:
     
     def test_split_by_multiple_columns(self):
         """Test splitting by multiple columns."""
-        splitter = CSVSplitter(self.test_data, ["Team", "Week"])
+        splitter = ScheduleSplitter(self.test_data, ["Team", "Week"])
         result = splitter.split()
         
         assert len(result) == 5  # 3 teams × 3 weeks, but some combinations don't exist
@@ -313,7 +313,7 @@ class TestCSVSplitter:
     
     def test_split_with_include_filter(self):
         """Test splitting with include filter."""
-        splitter = CSVSplitter(self.test_data, "Team", include_values=["A", "B"])
+        splitter = ScheduleSplitter(self.test_data, "Team", include_values=["A", "B"])
         result = splitter.split()
         
         assert len(result) == 2
@@ -323,7 +323,7 @@ class TestCSVSplitter:
     
     def test_split_with_exclude_filter(self):
         """Test splitting with exclude filter."""
-        splitter = CSVSplitter(self.test_data, "Team", exclude_values=["C"])
+        splitter = ScheduleSplitter(self.test_data, "Team", exclude_values=["C"])
         result = splitter.split()
         
         assert len(result) == 2
@@ -338,7 +338,7 @@ class TestCSVSplitter:
             temp_path = f.name
         
         try:
-            splitter = CSVSplitter(temp_path, "Team")
+            splitter = ScheduleSplitter(temp_path, "Team")
             result = splitter.split()
             
             assert len(result) == 3
@@ -351,12 +351,12 @@ class TestCSVSplitter:
     def test_invalid_column(self):
         """Test error handling for invalid column."""
         with pytest.raises(ValidationError, match="Group columns not found in data"):
-            CSVSplitter(self.test_data, "NonexistentColumn")
+            ScheduleSplitter(self.test_data, "NonexistentColumn")
     
     def test_invalid_data_type(self):
         """Test error handling for invalid data type."""
         with pytest.raises(ValidationError, match="Data must be a DataFrame or file path"):
-            CSVSplitter(123, "Team")
+            ScheduleSplitter(123, "Team")
 
 
 class TestScheduleExpander:
@@ -480,7 +480,7 @@ class TestCompleteWorkflow:
             assert len(parsed_data) > 0
             
             # 2. Split by team
-            splitter = CSVSplitter(parsed_data, "Team")
+            splitter = ScheduleSplitter(parsed_data, "Team")
             team_schedules = splitter.split()
             
             assert len(team_schedules) > 0

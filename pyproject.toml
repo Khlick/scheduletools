@@ -1,12 +1,12 @@
 [project]
 name = "scheduletools"
-version = "0.3.0"
-description = "Professional spreadsheet wrangling utilities for parsing, splitting, and expanding schedule data"
-authors = [{name = "Khris", email = "your@email.com"}]
+version = "0.3.2"
+description = "Professional spreadsheet wrangling utilities for parsing, splitting, and expanding schedule data."
 readme = "README.md"
-license = {file = "LICENSE"}
-requires-python = ">=3.8"
-keywords = ["schedule", "csv", "data-processing", "spreadsheet", "pandas"]
+license = {text = "MIT"}
+authors = [
+    {name = "Khris Griffis, Ph.D.", email = "khris.griffis.phd@gmail.com"}
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -18,10 +18,12 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Filters",
     "Topic :: Utilities",
 ]
+requires-python = ">=3.8"
 dependencies = [
     "pandas>=2.0",
     "click>=8.0",
@@ -40,10 +42,10 @@ dev = [
 schtool = "scheduletools.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/scheduletools"
-Repository = "https://github.com/yourusername/scheduletools"
-Documentation = "https://github.com/yourusername/scheduletools#readme"
-Issues = "https://github.com/yourusername/scheduletools/issues"
+Homepage = "https://github.com/Khlick/scheduletools"
+Repository = "https://github.com/Khlick/scheduletools"
+Documentation = "https://github.com/Khlick/scheduletools#readme"
+Issues = "https://github.com/Khlick/scheduletools/issues"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

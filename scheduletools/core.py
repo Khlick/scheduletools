@@ -349,9 +349,9 @@ class ScheduleParser:
             raise ParsingError(f"Error parsing schedule data: {e}")
 
 
-class CSVSplitter:
+class ScheduleSplitter:
     """
-    Split CSV data into multiple DataFrames based on grouping criteria.
+    Split schedule data into multiple DataFrames based on grouping criteria.
     
     This class provides functionality to split data by groups and optionally
     filter the results.
@@ -365,7 +365,7 @@ class CSVSplitter:
         exclude_values: Optional[Union[str, List[str]]] = None
     ):
         """
-        Initialize the CSVSplitter.
+        Initialize the ScheduleSplitter.
         
         Args:
             data: DataFrame or path to CSV file

@@ -9,7 +9,7 @@ to parse, split, and expand schedule data.
 import pandas as pd
 from pathlib import Path
 
-from scheduletools import ScheduleParser, CSVSplitter, ScheduleExpander
+from scheduletools import ScheduleParser, ScheduleSplitter, ScheduleExpander
 
 
 def main():
@@ -44,7 +44,7 @@ def main():
     print("\n=== Example 2: Splitting Data by Team ===")
     
     try:
-        splitter = CSVSplitter(sample_data, "Team")
+        splitter = ScheduleSplitter(sample_data, "Team")
         team_schedules = splitter.split()
         
         print(f"Split data into {len(team_schedules)} groups:")
@@ -86,7 +86,7 @@ def main():
     
     try:
         # 1. Split by team
-        splitter = CSVSplitter(sample_data, "Team")
+        splitter = ScheduleSplitter(sample_data, "Team")
         team_schedules = splitter.split()
         
         # 2. Expand each team's schedule
