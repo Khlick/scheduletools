@@ -35,7 +35,7 @@ splitter = ScheduleSplitter(parsed_data, "Team")
 team_schedules = splitter.split()
 
 # 3. Expand with additional columns
-expander = ScheduleExpander(team_schedules["Team_A"], config.json)
+expander = ScheduleExpander(team_schedules["E"], config.json)
 expanded_data = expander.expand()
 ```
 
@@ -51,8 +51,8 @@ Start with a wide blocked schedule format:
 |--|--|--|--|--|--|
 | Date | Time | Date | Time | | |
 | | 6 pm - 7:15 pm | | 6:00 pm - 7:00 pm | 7:00 pm - 8:00 pm | 8:15 pm - 9:15 pm |
-| 7/21/2025 | 16U / 18U | 7/22/2025 | 12U / 14U | 18U | 16U |
-| 7/28/2025 | 16U / 18U | 7/29/2025 | 8U / 10U | 18U | 16U |
+| 7/21/2025 | E / F | 7/22/2025 | C / D | F | E |
+| 7/28/2025 | E / F | 7/29/2025 | A / B | F | E |
 
 ```python
 from scheduletools import ScheduleParser
@@ -66,18 +66,18 @@ parsed_data = parser.parse()
 
 | Index | Week | Day | Date | Start Time | Duration | Team |
 |-------|------|-----|------|------------|----------|------|
-| 0 | 0 | Monday | 7/21/2025 | 6:00 PM | 1:15 | 16U |
-| 1 | 0 | Monday | 7/21/2025 | 6:00 PM | 1:15 | 18U |
-| 2 | 0 | Tuesday | 7/22/2025 | 6:00 PM | 1:00 | 12U |
-| 3 | 0 | Tuesday | 7/22/2025 | 6:00 PM | 1:00 | 14U |
-| 4 | 0 | Tuesday | 7/22/2025 | 7:00 PM | 1:00 | 18U |
-| 5 | 0 | Tuesday | 7/22/2025 | 8:15 PM | 1:00 | 16U |
-| 6 | 1 | Monday | 7/28/2025 | 6:00 PM | 1:15 | 16U |
-| 7 | 1 | Monday | 7/28/2025 | 6:00 PM | 1:15 | 18U |
-| 8 | 1 | Tuesday | 7/29/2025 | 6:00 PM | 1:00 | 8U |
-| 9 | 1 | Tuesday | 7/29/2025 | 6:00 PM | 1:00 | 10U |
-| 10 | 1 | Tuesday | 7/29/2025 | 7:00 PM | 1:00 | 18U |
-| 11 | 1 | Tuesday | 7/29/2025 | 8:15 PM | 1:00 | 16U |
+| 0 | 0 | Monday | 7/21/2025 | 6:00 PM | 1:15 | E |
+| 1 | 0 | Monday | 7/21/2025 | 6:00 PM | 1:15 | F |
+| 2 | 0 | Tuesday | 7/22/2025 | 6:00 PM | 1:00 | C |
+| 3 | 0 | Tuesday | 7/22/2025 | 6:00 PM | 1:00 | D |
+| 4 | 0 | Tuesday | 7/22/2025 | 7:00 PM | 1:00 | F |
+| 5 | 0 | Tuesday | 7/22/2025 | 8:15 PM | 1:00 | E |
+| 6 | 1 | Monday | 7/28/2025 | 6:00 PM | 1:15 | E |
+| 7 | 1 | Monday | 7/28/2025 | 6:00 PM | 1:15 | F |
+| 8 | 1 | Tuesday | 7/29/2025 | 6:00 PM | 1:00 | A |
+| 9 | 1 | Tuesday | 7/29/2025 | 6:00 PM | 1:00 | B |
+| 10 | 1 | Tuesday | 7/29/2025 | 7:00 PM | 1:00 | F |
+| 11 | 1 | Tuesday | 7/29/2025 | 8:15 PM | 1:00 | E |
 
 ### Step 2: Expand with Required Fields
 
@@ -114,18 +114,18 @@ expanded_data = expander.expand()
 
 | Date | Time | Duration | Arrival Time | Name | Location Name | Notes |
 |------|------|----------|--------------|------|---------------|-------|
-| 7/21/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | 16U |
-| 7/21/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | 18U |
-| 7/22/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | 12U |
-| 7/22/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | 14U |
-| 7/22/2025 | 7:00 PM | 1:00 | 15 | On-Ice Practice | PISC | 18U |
-| 7/22/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | 16U |
-| 7/28/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | 16U |
-| 7/28/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | 18U |
-| 7/29/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | 8U |
-| 7/29/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | 10U |
-| 7/29/2025 | 7:00 PM | 1:00 | 15 | On-Ice Practice | PISC | 18U |
-| 7/29/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | 16U |
+| 7/21/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | E |
+| 7/21/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | F |
+| 7/22/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | C |
+| 7/22/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | D |
+| 7/22/2025 | 7:00 PM | 1:00 | 15 | On-Ice Practice | PISC | F |
+| 7/22/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | E |
+| 7/28/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | E |
+| 7/28/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | F |
+| 7/29/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | A |
+| 7/29/2025 | 6:00 PM | 1:00 | 15 | On-Ice Practice | PISC | B |
+| 7/29/2025 | 7:00 PM | 1:00 | 15 | On-Ice Practice | PISC | F |
+| 7/29/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | E |
 
 ### Step 3: Split by Team
 
@@ -143,17 +143,17 @@ print("Available teams:", list(team_schedules.keys()))
 *Output:*
 
 ```terminal
-Available teams:'10U', '12U', '14U', '16U', '18U', '8U'
+Available teams:'A', 'B', 'C', 'D', 'E', 'F'
 ```
 
-**Example - Team 16U Schedule: `print(team_schedules['16U'])`**
+**Example - Team E Schedule: `print(team_schedules['E'])`**
 
 | Date | Time | Duration | Arrival Time | Name | Location Name | Notes |
 |------|------|----------|--------------|------|---------------|-------|
-| 7/21/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | 16U |
-| 7/22/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | 16U |
-| 7/28/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | 16U |
-| 7/29/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | 16U |
+| 7/21/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | E |
+| 7/22/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | E |
+| 7/28/2025 | 6:00 PM | 1:15 | 15 | On-Ice Practice | PISC | E |
+| 7/29/2025 | 8:15 PM | 1:00 | 15 | On-Ice Practice | PISC | E |
 
 ## ScheduleParser
 
@@ -171,9 +171,8 @@ _Contents of `schedule.txt`:_
 1|Monday      → Tuesday     →                    
 2|Date        → Time        → Date         → Time        →             →            
 3|            → 6:00–7:15pm →              → 6:00–7:00pm → 7:00–8:00pm → 8:15–9:15pm
-4|7/21/2025   → 16U / 18U   → 7/22/2025    → 12U / 14U   → 18U         → 16U
-5|7/28/2025   → 16U / 18U   → 7/29/2025    → 8U / 10U    → 18U         → 16U
-6|8/04/2025   → 16U / 18U   → 8/05/2025    → 12U / 14U   → 18U         → 16U
+4|7/21/2025   → E / F       → 7/22/2025    → C / D       → F           → E
+5|7/28/2025   → E / F       → 7/29/2025    → A / B       → F           → E
 
 ```
 
@@ -201,30 +200,46 @@ data = parser.parse()
 config = {"Format": {"Date": "%Y-%m-%d"}}
 parser = ScheduleParser("schedule.txt", config=config)
 data = parser.parse()
+
+# With custom output column name
+config = {"Output": {"value_column_name": "Player"}}
+parser = ScheduleParser("schedule.txt", config=config)
+data = parser.parse()
 ```
 
 ### Configuration
 
-```json
-{
-  "Format": {
-    "Date": "%m/%d/%Y",
-    "Time": "%I:%M %p",
-    "Duration": "H:MM"
-  },
-  "Block Detection": {
-    "date_column_name": "Date"
-  },
-  "Missing Values": {
-    "Omit": true,
-    "Replacement": "TBD"
-  },
-  "Split": {
-    "Skip": false,
-    "Separator": ","
-  }
-}
+```json:config.json
+1|{
+2|  "Format": {
+3|    "Date": "%m/%d/%Y",
+4|    "Time": "%I:%M %p",
+5|    "Duration": "H:MM"
+6|  },
+7|  "Block Detection": {
+8|    "date_column_name": "Date"
+9|  },
+10|  "Missing Values": {
+11|    "Omit": true,
+12|    "Replacement": "TBD"
+13|  },
+14|  "Split": {
+15|    "Skip": false,
+16|    "Separator": ","
+17|  },
+18|  "Output": {
+19|    "value_column_name": "Team"
+20|  }
+21|}
 ```
+
+### Configuration Sections
+
+- **Format**: Date, time, and duration format specifications
+- **Block Detection**: Date column name for identifying schedule blocks
+- **Missing Values**: How to handle empty or missing team entries
+- **Split**: Team entry splitting configuration (separator, skip options)
+- **Output**: Output column naming (e.g., "Team", "Player", "Group")
 
 ## ScheduleSplitter
 

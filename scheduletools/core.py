@@ -36,6 +36,7 @@ class ScheduleParser:
         "Block Detection": {"date_column_name": "Date"},
         "Missing Values": {"Omit": True, "Replacement": "missing"},
         "Split": {"Skip": False, "Separator": "/"},
+        "Output": {"value_column_name": "Team"},
     }
 
     def __init__(
@@ -119,6 +120,10 @@ class ScheduleParser:
         # Ensure Block Detection section exists
         if "Block Detection" not in self.config:
             self.config["Block Detection"] = self.DEFAULT_CONFIG["Block Detection"]
+            
+        # Ensure Output section exists
+        if "Output" not in self.config:
+            self.config["Output"] = self.DEFAULT_CONFIG["Output"]
 
     def _find_block_boundaries(self) -> List[Tuple[int, int]]:
         """
@@ -356,7 +361,7 @@ class ScheduleParser:
                                     ),
                                     "Start Time": start_time,
                                     "Duration": duration,
-                                    "Team": team,
+                                    self.config["Output"]["value_column_name"]: team,
                                 }
                             )
 

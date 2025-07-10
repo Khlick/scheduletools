@@ -1,6 +1,6 @@
 [project]
 name = "scheduletools"
-version = "0.3.2"
+dynamic = ["version"]
 description = "Professional spreadsheet wrangling utilities for parsing, splitting, and expanding schedule data."
 readme = "README.md"
 license = {text = "MIT"}
@@ -44,12 +44,17 @@ Documentation = "https://github.com/Khlick/scheduletools/blob/main/README.md"
 Issues = "https://github.com/Khlick/scheduletools/issues"
 
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0", "wheel", "setuptools-scm>=7.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["scheduletools*"]
+
+[tool.setuptools_scm]
+version_scheme = "python-simplified-semver"
+local_scheme = "node-and-timestamp"
+write_to = "scheduletools/_version.py"
 
 [tool.black]
 line-length = 88

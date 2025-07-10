@@ -21,6 +21,9 @@ wheels/
 *.egg
 MANIFEST
 
+# Auto-generated version file
+scheduletools/_version.py
+
 # Virtual environments
 venv/
 env/

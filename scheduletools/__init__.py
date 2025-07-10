@@ -1,11 +1,14 @@
 """
-ScheduleTools - Professional spreadsheet wrangling utilities
+ScheduleTools - Professional spreadsheet wrangling utilities.
 
-A Python package for parsing, splitting, and expanding schedule data
-with both CLI and programmatic interfaces.
+A Python library for parsing, splitting, and expanding schedule data from various formats.
 """
 
-__version__ = "0.3.2"
+try:
+    from ._version import version as __version__
+except ImportError:
+    __version__ = "unknown"
+
 __author__ = "Khris Griffis, Ph.D."
 
 from .core import ScheduleParser, ScheduleSplitter, ScheduleExpander
