@@ -57,45 +57,52 @@ class ScheduleParser:
         schedule_path: Union[str, Path], 
         config_path: Optional[Union[str, Path]] = None, 
         reference_date: str = "2025-09-02",
-        block_start_marker: Optional[str] = None
+        block_start_marker: Optional[str] = None,
+        config: Optional[Dict[str, Any]] = None
     ):
         """
-        Initialize the ScheduleParser.
+        Initialize ScheduleParser.
         
         Args:
             schedule_path: Path to the schedule file
-            config_path: Optional path to configuration JSON file
-            reference_date: Reference date for week calculations
-            block_start_marker: Text marker that indicates the start of a block column (default: "Date")
+            config_path: Optional path to configuration file
+            reference_date: Reference date for week calculation (YYYY-MM-DD)
+            block_start_marker: Optional custom block start marker
+            config: Optional config dictionary to merge with DEFAULT_CONFIG
         """
         self.schedule_path = Path(schedule_path)
         self.reference_date = pd.to_datetime(reference_date)
         self.block_start_marker = block_start_marker
-        self.config = self._load_config(config_path)
+        
+        # Load and merge configurations
+        self.config = self._load_config(config_path, config)
         self._validate_config()
         
-    def _load_config(self, config_path: Optional[Union[str, Path]]) -> Dict[str, Any]:
+    def _load_config(self, config_path: Optional[Union[str, Path]], provided_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Load configuration from file or use defaults."""
+        # Start with default config
+        config = self.DEFAULT_CONFIG.copy()
+        
+        # Merge with provided config if given
+        if provided_config:
+            config.update(provided_config)
+        
+        # Merge with file config if given
         if config_path:
             config_file = Path(config_path)
             if not config_file.exists():
-                raise FileError(f"Configuration file not found: {config_path}")
+                raise FileError(f"Configuration file not found: {config_file}")
+            
             try:
-                with open(config_file, "r") as f:
-                    return json.load(f)
+                with open(config_file, 'r') as f:
+                    file_config = json.load(f)
+                config.update(file_config)
             except json.JSONDecodeError as e:
                 raise ConfigurationError(f"Invalid JSON in config file: {e}")
+            except Exception as e:
+                raise FileError(f"Error reading configuration file: {e}")
         
-        # Try fallback config
-        fallback_path = self.schedule_path.parent / "parser_config.json"
-        if fallback_path.exists():
-            try:
-                with open(fallback_path, "r") as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                warnings.warn("Fallback config file is invalid, using defaults")
-        
-        return self.DEFAULT_CONFIG.copy()
+        return config
     
     def _validate_config(self) -> None:
         """Validate the configuration structure."""
@@ -109,14 +116,14 @@ class ScheduleParser:
             self.config["Block Detection"] = self.DEFAULT_CONFIG["Block Detection"]
     
     def _is_meta_row(self, value: str) -> bool:
-        """Check if a row value is meta-information that should be skipped."""
-        if pd.isna(value):
+        """Check if a value represents a meta-information row."""
+        if not value or not str(value).strip():
             return True
         
-        value_str = str(value).lower().strip()
-        meta_patterns = self.config["Block Detection"].get("meta_patterns", [])
+        value_lower = str(value).lower().strip()
+        meta_patterns = self.config["Block Detection"]["meta_patterns"]
         
-        return any(pattern in value_str for pattern in meta_patterns)
+        return any(pattern in value_lower for pattern in meta_patterns)
     
     def _find_block_boundaries(self) -> List[Tuple[int, int]]:
         """

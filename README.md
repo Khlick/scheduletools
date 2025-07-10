@@ -28,30 +28,47 @@ cd scheduletools
 pip install -e ".[dev]"
 ```
 
-## Quick Start
+## Usage
 
-### As a Python Library
+### Programmatic Usage
 
 ```python
 from scheduletools import ScheduleParser, CSVSplitter, ScheduleExpander
+import pandas as pd
 
-# Parse schedule data with default block marker
-parser = ScheduleParser("schedule.txt")
+# Parse schedule with default settings
+parser = ScheduleParser("schedule.txt", reference_date="2025-07-21")
 parsed_data = parser.parse()
 
-# Parse with custom block marker
-parser = ScheduleParser("schedule.txt", block_start_marker="Day")
+# Parse with custom configuration
+custom_config = {
+    "Format": {
+        "Date": "%m/%d/%Y",
+        "Time": "%I:%M %p"
+    },
+    "Block Detection": {
+        "start_marker": "Date",
+        "skip_meta_rows": True
+    },
+    "Missing Values": {
+        "Omit": True,
+        "Replacement": "TBD"
+    }
+}
+
+parser = ScheduleParser(
+    "schedule.txt", 
+    reference_date="2025-07-21",
+    config=custom_config
+)
 parsed_data = parser.parse()
 
-# Split data by team
+# Split by team
 splitter = CSVSplitter(parsed_data, "Team")
 team_schedules = splitter.split()
 
-# Expand to required format
-expander = ScheduleExpander(team_schedules["Team_A"], {
-    "Required": ["Date", "Time", "Team", "Location", "Notes"],
-    "defaults": {"Location": "Main Arena", "Notes": ""}
-})
+# Expand with template
+expander = ScheduleExpander(team_schedules["16U"], expansion_template)
 expanded_data = expander.expand()
 ```
 
@@ -177,121 +194,56 @@ expander = ScheduleExpander("input.csv", config)
 expanded_df = expander.expand()
 ```
 
+## Configuration
+
+ScheduleParser supports flexible configuration through config objects or JSON files. Configuration options include:
+
+### Format Settings
+- `Date`: Date format string (default: `"%m/%d/%Y"`)
+- `Time`: Time format string (default: `"%I:%M %p"`)
+- `Duration`: Duration format (default: `"H:MM"`)
+
+### Block Detection
+- `start_marker`: Text marker for block identification (default: `"Date"`)
+- `skip_meta_rows`: Whether to skip metadata rows (default: `True`)
+- `meta_patterns`: Patterns to identify metadata rows
+
+### Missing Values
+- `Omit`: Whether to omit missing values (default: `True`)
+- `Replacement`: Value to use for missing entries (default: `"missing"`)
+
+### Split Settings
+- `Skip`: Whether to skip team splitting (default: `False`)
+- `Separator`: Character to split team names (default: `"/"`)
+
+### Example Configuration
+
+```json
+{
+    "Format": {
+        "Date": "%m/%d/%Y",
+        "Time": "%I:%M %p",
+        "Duration": "H:MM"
+    },
+    "Block Detection": {
+        "start_marker": "Date",
+        "skip_meta_rows": true,
+        "meta_patterns": ["ice", "time", "header", "day", "week", "note", "info"]
+    },
+    "Missing Values": {
+        "Omit": true,
+        "Replacement": "TBD"
+    },
+    "Split": {
+        "Skip": false,
+        "Separator": "/"
+    }
+}
+```
+
 ## CLI Commands
 
 ### `schtool parse`
-
-Parse a schedule file into structured CSV format.
-
-```bash
-# Use default block marker ("Date")
-schtool parse schedule.txt -o parsed.csv
-
-# Use custom block marker
-schtool parse schedule.txt --block-marker "Day" -o parsed.csv
-
-# With custom configuration
-schtool parse schedule.txt --config config.json --reference-date 2025-09-02
-```
-
-### `schtool split`
-
-Split CSV file into multiple files by group.
-
-```bash
-schtool split data.csv -g Team -o team_files/
-schtool split data.csv -g "Week,Team" --filter "Week_1,Week_2" --exclude "Team_C"
-```
-
-### `schtool expand`
-
-Expand schedule CSV to required column format.
-
-```bash
-schtool expand input.csv template.json -o expanded.csv
-```
-
-### `schtool process`
-
-Complete workflow combining split and optional expand operations.
-
-```bash
-schtool process input.csv -o output/ -t template.json
-```
-
-## Input Format
-
-The ScheduleParser expects tab-delimited files with a specific structure:
-
-```
-Monday		Tuesday			
-Date	Time	Date	Time		
-	6 pm - 7:15 pm		6:00 pm - 7:00 pm	7:00 pm - 8:00 pm	8:15 pm - 9:15 pm
-7/21/2025	16U / 18U	7/22/2025	12U / 14U	18U	16U
-7/28/2025	16U / 18U	7/29/2025	8U / 10U	18U	16U
-8/4/2025	16U / 18U	8/5/2025	12U / 14U	18U	16U
-```
-
-**Key Features:**
-- **Block Detection**: Uses configurable markers (default: "Date") to identify schedule blocks
-- **Team Splitting**: Automatically splits combined teams (e.g., "16U / 18U" → separate entries)
-- **Meta Row Handling**: Skips rows containing meta-information like "ice", "time", etc.
-- **Flexible Format**: Supports different date/time formats via configuration
-
-## Error Handling
-
-The package provides comprehensive error handling with custom exceptions:
-
-```python
-from scheduletools import (
-    ScheduleToolsError, 
-    ParsingError, 
-    ValidationError, 
-    ConfigurationError, 
-    FileError
-)
-
-try:
-    parser = ScheduleParser("nonexistent.txt")
-    df = parser.parse()
-except FileError as e:
-    print(f"File error: {e}")
-except ParsingError as e:
-    print(f"Parsing error: {e}")
-```
-
-## Development
-
-### Setup
-
-```bash
-git clone https://github.com/yourusername/scheduletools.git
-cd scheduletools
-pip install -e ".[dev]"
-```
-
-### Testing
-
-```bash
-pytest
-pytest --cov=scheduletools
-```
-
-### Code Quality
-
-```bash
-black scheduletools/
-flake8 scheduletools/
-mypy scheduletools/
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 
@@ -299,10 +251,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### 0.2.0
+- **Enhanced Configuration System**: Added support for passing config objects directly to ScheduleParser
+- **Improved Block Detection**: Fixed block boundary detection logic for more reliable parsing
+- **Better Error Handling**: Enhanced error messages and exception handling for configuration files
+- **Meta Row Detection**: Improved handling of empty strings and meta-information rows
+- **Complete Workflow Support**: Fixed end-to-end workflow testing and validation
+- **Documentation Updates**: Added comprehensive configuration documentation and examples
+
 ### 0.1.0
 - Initial release
 - Core parsing, splitting, and expansion functionality
 - CLI interface with comprehensive commands
 - Professional API design with type hints
 - Comprehensive error handling
-- Configurable block detection with custom markers 
+- Configurable block detection with custom markers

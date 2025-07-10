@@ -1,6 +1,6 @@
 [project]
 name = "scheduletools"
-version = "0.1.0"
+version = "0.2.0"
 description = "Professional spreadsheet wrangling utilities for parsing, splitting, and expanding schedule data"
 authors = [{name = "Khris", email = "your@email.com"}]
 readme = "README.md"
@@ -94,7 +94,4 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=scheduletools",
-    "--cov-report=term-missing",
-    "--cov-report=html",
 ]

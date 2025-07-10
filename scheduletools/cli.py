@@ -9,6 +9,7 @@ import click
 import pandas as pd
 from pathlib import Path
 from typing import Optional
+import json
 
 from .core import ScheduleParser, CSVSplitter, ScheduleExpander
 from .exceptions import ScheduleToolsError
@@ -55,15 +56,39 @@ def parse(schedule: Path, config: Optional[Path], output: Optional[Path],
     
     SCHEDULE: Path to the input schedule file (tab-delimited format)
     """
-    parser = ScheduleParser(schedule, config, reference_date, block_marker)
-    df = parser.parse()
+    # Load config if provided
+    config_data = None
+    if config:
+        with open(config, 'r') as f:
+            config_data = json.load(f)
+
+    # Create parser with config
+    parser = ScheduleParser(
+        schedule, 
+        config_path=config,
+        reference_date=reference_date,
+        block_start_marker=block_marker,
+        config=config_data
+    )
     
+    # Parse schedule
+    result = parser.parse()
+    
+    if result.empty:
+        click.echo("⚠️  No data parsed from schedule file")
+        return 1
+    
+    # Output results
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(output, index=False)
-        click.echo(f"Parsed schedule saved to: {output}")
+        result.to_csv(output, index=False)
+        click.echo(f"✓ Schedule parsed and saved to {output}")
+        click.echo(f"  Rows: {len(result)}, Columns: {len(result.columns)}")
     else:
-        click.echo(df.to_string(index=False))
+        click.echo("Parsed Schedule:")
+        click.echo(result.to_string(index=False))
+    
+    return 0
 
 
 @main.command()

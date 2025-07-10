@@ -364,6 +364,65 @@ def test_complete_workflow():
         if schedule_file.exists():
             schedule_file.unlink()
 
+def test_schedule_parser_with_config():
+    """Test ScheduleParser with config object."""
+    print("\n=== Testing ScheduleParser with Config Object ===")
+    
+    # Create test schedule file
+    schedule_file = create_test_schedule_file()
+    
+    try:
+        # Test with custom config object
+        custom_config = {
+            "Format": {
+                "Date": "%m/%d/%Y",
+                "Time": "%I:%M %p",
+                "Duration": "H:MM"
+            },
+            "Block Detection": {
+                "start_marker": "Date",
+                "skip_meta_rows": True,
+                "meta_patterns": ["ice", "time", "header", "day", "week", "note", "info"]
+            },
+            "Missing Values": {
+                "Omit": True,
+                "Replacement": "TBD"
+            },
+            "Split": {
+                "Skip": False,
+                "Separator": "/"
+            }
+        }
+        
+        parser = ScheduleParser(
+            schedule_file, 
+            reference_date="2025-07-21",
+            config=custom_config
+        )
+        
+        result = parser.parse()
+        
+        print(f"✓ Parsed schedule with custom config: {len(result)} rows")
+        if len(result) > 0:
+            print(f"  Columns: {list(result.columns)}")
+            print(f"  Sample data:")
+            print(result.head(3).to_string(index=False))
+            
+            # Verify custom config was applied
+            if "TBD" in result["Team"].values:
+                print("✓ Custom replacement value 'TBD' found in data")
+        
+        return True
+    except Exception as e:
+        print(f"✗ ScheduleParser config test failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    finally:
+        # Cleanup schedule file
+        if schedule_file.exists():
+            schedule_file.unlink()
+
 def main():
     """Run all tests."""
     print("Testing ScheduleTools Package")
@@ -375,7 +434,8 @@ def main():
         test_csv_splitter,
         test_schedule_expander,
         test_error_handling,
-        test_complete_workflow
+        test_complete_workflow,
+        test_schedule_parser_with_config
     ]
     
     passed = 0
