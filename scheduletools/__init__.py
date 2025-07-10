@@ -17,5 +17,5 @@ __all__ = [
     "ScheduleExpander",
     "ScheduleToolsError",
     "ParsingError",
-    "ValidationError"
+    "ValidationError",
 ]

@@ -2,6 +2,11 @@
 
 A Python library for parsing, splitting, and expanding schedule data from various formats.
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/scheduletools.svg)](https://badge.fury.io/py/scheduletools)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 ## Features
 
 - **ScheduleParser**: Parse tab-delimited schedule files with configurable date column names

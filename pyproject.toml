@@ -44,7 +44,7 @@ schtool = "scheduletools.cli:main"
 [project.urls]
 Homepage = "https://github.com/Khlick/scheduletools"
 Repository = "https://github.com/Khlick/scheduletools"
-Documentation = "https://github.com/Khlick/scheduletools#readme"
+Documentation = "https://github.com/Khlick/scheduletools/blob/main/README.md"
 Issues = "https://github.com/Khlick/scheduletools/issues"
 
 [build-system]
