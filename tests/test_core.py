@@ -64,20 +64,20 @@ class TestScheduleParser:
             parser = ScheduleParser(temp_path)
             assert parser.config["Format"]["Date"] == "%m/%d/%Y"
             assert parser.config["Format"]["Time"] == "%I:%M %p"
-            assert parser.config["Block Detection"]["start_marker"] == "Date"
+            assert parser.config["Block Detection"]["date_column_name"] == "Date"
         finally:
             Path(temp_path).unlink()
     
-    def test_parser_with_custom_block_marker(self):
-        """Test parser with custom block start marker."""
+    def test_parser_with_custom_date_column_name(self):
+        """Test parser with custom date column name."""
         # Create a minimal test file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
             f.write("Header\nDay\nTime\nData")
             temp_path = f.name
         
         try:
-            parser = ScheduleParser(temp_path, block_start_marker="Day")
-            assert parser.block_start_marker == "Day"
+            parser = ScheduleParser(temp_path, date_column_name="Day")
+            assert parser.date_column_name == "Day"
         finally:
             Path(temp_path).unlink()
     
@@ -90,9 +90,7 @@ class TestScheduleParser:
                 "Duration": "H:MM"
             },
             "Block Detection": {
-                "start_marker": "Day",
-                "skip_meta_rows": True,
-                "meta_patterns": ["ice", "time", "header"]
+                "date_column_name": "Day"
             },
             "Missing Values": {
                 "Omit": False,
@@ -116,7 +114,7 @@ class TestScheduleParser:
             parser = ScheduleParser(temp_path, temp_config_path)
             assert parser.config["Format"]["Date"] == "%Y-%m-%d"
             assert parser.config["Format"]["Time"] == "%H:%M"
-            assert parser.config["Block Detection"]["start_marker"] == "Day"
+            assert parser.config["Block Detection"]["date_column_name"] == "Day"
             assert parser.config["Missing Values"]["Replacement"] == "TBD"
         finally:
             Path(temp_config_path).unlink()
@@ -150,17 +148,17 @@ class TestScheduleParser:
         finally:
             schedule_file.unlink()
     
-    def test_parser_with_different_block_marker(self):
-        """Test parser with a different block marker."""
+    def test_parser_with_different_date_column_name(self):
+        """Test parser with a different date column name."""
         schedule_file = create_test_schedule_file_with_different_marker()
         
         try:
-            parser = ScheduleParser(schedule_file, reference_date="2025-07-21", block_start_marker="Day")
+            parser = ScheduleParser(schedule_file, reference_date="2025-07-21", date_column_name="Day")
             result = parser.parse()
             
             # Should parse some data
             assert isinstance(result, pd.DataFrame)
-            print(f"Parsed {len(result)} rows with 'Day' marker")
+            print(f"Parsed {len(result)} rows with 'Day' date column name")
             
             # If data was parsed, check structure
             if len(result) > 0:
@@ -171,13 +169,13 @@ class TestScheduleParser:
         finally:
             schedule_file.unlink()
     
-    def test_parser_with_wrong_block_marker(self):
-        """Test parser fails with wrong block marker."""
+    def test_parser_with_wrong_date_column_name(self):
+        """Test parser fails with wrong date column name."""
         schedule_file = create_test_schedule_file()
         
         try:
-            parser = ScheduleParser(schedule_file, reference_date="2025-07-21", block_start_marker="WrongMarker")
-            with pytest.raises(ParsingError, match="No block start marker"):
+            parser = ScheduleParser(schedule_file, reference_date="2025-07-21", date_column_name="WrongMarker")
+            with pytest.raises(ParsingError, match="No date column name"):
                 parser.parse()
         finally:
             schedule_file.unlink()
@@ -195,9 +193,7 @@ class TestScheduleParser:
                     "Duration": "H:MM"
                 },
                 "Block Detection": {
-                    "start_marker": "Date",
-                    "skip_meta_rows": True,
-                    "meta_patterns": ["ice", "time", "header"]
+                    "date_column_name": "Date"
                 },
                 "Missing Values": {
                     "Omit": True,
@@ -276,23 +272,7 @@ class TestScheduleParser:
         finally:
             schedule_file.unlink()
     
-    def test_meta_row_detection(self):
-        """Test meta row detection functionality."""
-        schedule_file = create_test_schedule_file()
-        
-        try:
-            parser = ScheduleParser(schedule_file, reference_date="2025-07-21")
-            
-            # Test meta row detection
-            assert parser._is_meta_row("ice time") == True
-            assert parser._is_meta_row("header info") == True
-            assert parser._is_meta_row("7/21/2025") == False
-            assert parser._is_meta_row("16U") == False
-            assert parser._is_meta_row("") == True
-            assert parser._is_meta_row(None) == True
-            
-        finally:
-            schedule_file.unlink()
+
 
 
 class TestCSVSplitter:
@@ -533,35 +513,25 @@ class TestCompleteWorkflow:
 
 
 class TestErrorHandling:
-    """Test error handling across all classes."""
+    """Test error handling and exceptions."""
     
     def test_custom_exceptions(self):
         """Test that custom exceptions are properly defined."""
-        # Test that exceptions can be raised and caught
-        try:
-            raise FileError("Test file error")
-        except FileError as e:
-            assert str(e) == "Test file error"
+        # Test that exceptions can be instantiated
+        assert isinstance(ScheduleToolsError("test"), ScheduleToolsError)
+        assert isinstance(ParsingError("test"), ParsingError)
+        assert isinstance(ValidationError("test"), ValidationError)
+        assert isinstance(ConfigurationError("test"), ConfigurationError)
+        assert isinstance(FileError("test"), FileError)
         
-        try:
-            raise ParsingError("Test parsing error")
-        except ParsingError as e:
-            assert str(e) == "Test parsing error"
-        
-        try:
-            raise ValidationError("Test validation error")
-        except ValidationError as e:
-            assert str(e) == "Test validation error"
-        
-        try:
-            raise ConfigurationError("Test config error")
-        except ConfigurationError as e:
-            assert str(e) == "Test config error"
+        # Test that exceptions have proper messages
+        error = ScheduleToolsError("test message")
+        assert str(error) == "test message"
     
     def test_exception_inheritance(self):
-        """Test that all exceptions inherit from base exception."""
-        exceptions = [FileError, ParsingError, ValidationError, ConfigurationError]
-        
-        for exc_class in exceptions:
-            exc = exc_class("test")
-            assert isinstance(exc, ScheduleToolsError) 
+        """Test that exceptions inherit properly."""
+        # Test inheritance hierarchy
+        assert issubclass(ParsingError, ScheduleToolsError)
+        assert issubclass(ValidationError, ScheduleToolsError)
+        assert issubclass(ConfigurationError, ScheduleToolsError)
+        assert issubclass(FileError, ScheduleToolsError) 

@@ -38,9 +38,7 @@ class ScheduleParser:
             "Duration": "H:MM"
         },
         "Block Detection": {
-            "start_marker": "Date",
-            "skip_meta_rows": True,
-            "meta_patterns": ["ice", "time", "header", "day", "week", "note", "info"]
+            "date_column_name": "Date"
         },
         "Missing Values": {
             "Omit": True,
@@ -57,7 +55,7 @@ class ScheduleParser:
         schedule_path: Union[str, Path], 
         config_path: Optional[Union[str, Path]] = None, 
         reference_date: str = "2025-09-02",
-        block_start_marker: Optional[str] = None,
+        date_column_name: Optional[str] = None,
         config: Optional[Dict[str, Any]] = None
     ):
         """
@@ -67,12 +65,12 @@ class ScheduleParser:
             schedule_path: Path to the schedule file
             config_path: Optional path to configuration file
             reference_date: Reference date for week calculation (YYYY-MM-DD)
-            block_start_marker: Optional custom block start marker
+            date_column_name: Optional custom date column name
             config: Optional config dictionary to merge with DEFAULT_CONFIG
         """
         self.schedule_path = Path(schedule_path)
         self.reference_date = pd.to_datetime(reference_date)
-        self.block_start_marker = block_start_marker
+        self.date_column_name = date_column_name
         
         # Load and merge configurations
         self.config = self._load_config(config_path, config)
@@ -80,12 +78,22 @@ class ScheduleParser:
         
     def _load_config(self, config_path: Optional[Union[str, Path]], provided_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Load configuration from file or use defaults."""
+        def deep_update(base_dict: Dict, update_dict: Dict) -> Dict:
+            """Recursively update nested dictionaries."""
+            result = base_dict.copy()
+            for key, value in update_dict.items():
+                if isinstance(value, dict) and key in result and isinstance(result[key], dict):
+                    result[key] = deep_update(result[key], value)
+                else:
+                    result[key] = value
+            return result
+
         # Start with default config
         config = self.DEFAULT_CONFIG.copy()
         
         # Merge with provided config if given
         if provided_config:
-            config.update(provided_config)
+            config = deep_update(config, provided_config)
         
         # Merge with file config if given
         if config_path:
@@ -96,7 +104,7 @@ class ScheduleParser:
             try:
                 with open(config_file, 'r') as f:
                     file_config = json.load(f)
-                config.update(file_config)
+                config = deep_update(config, file_config)
             except json.JSONDecodeError as e:
                 raise ConfigurationError(f"Invalid JSON in config file: {e}")
             except Exception as e:
@@ -115,16 +123,6 @@ class ScheduleParser:
         if "Block Detection" not in self.config:
             self.config["Block Detection"] = self.DEFAULT_CONFIG["Block Detection"]
     
-    def _is_meta_row(self, value: str) -> bool:
-        """Check if a value represents a meta-information row."""
-        if not value or not str(value).strip():
-            return True
-        
-        value_lower = str(value).lower().strip()
-        meta_patterns = self.config["Block Detection"]["meta_patterns"]
-        
-        return any(pattern in value_lower for pattern in meta_patterns)
-    
     def _find_block_boundaries(self) -> List[Tuple[int, int]]:
         """
         Find block boundaries based on the configurable marker.
@@ -134,31 +132,31 @@ class ScheduleParser:
         """
         df = self.df
         
-        # Use configurable block start marker
-        block_marker = self.block_start_marker or self.config["Block Detection"]["start_marker"]
+        # Use configurable date column name
+        date_col_name = self.date_column_name or self.config["Block Detection"]["date_column_name"]
         
-        # Find the row that contains the block start marker in the first column
+        # Find the row that contains the date column name in the first column
         marker_row_idx = None
         for row_idx, row in df.iterrows():
             first_col_value = str(row.iloc[0]).strip().lower()
-            if first_col_value == block_marker.lower():
+            if first_col_value == date_col_name.lower():
                 marker_row_idx = row_idx
                 break
         
         if marker_row_idx is None:
-            raise ParsingError(f"No block start marker '{block_marker}' found in first column")
+            raise ParsingError(f"No date column name '{date_col_name}' found in first column")
         
         # Use that row to find block boundaries
         marker_row = df.iloc[marker_row_idx]
         block_start_cols = []
         
-        # Find all columns in this row that contain the block marker
+        # Find all columns in this row that contain the date column name
         for col_idx, value in enumerate(marker_row):
-            if str(value).strip().lower() == block_marker.lower():
+            if str(value).strip().lower() == date_col_name.lower():
                 block_start_cols.append(col_idx)
         
         if not block_start_cols:
-            raise ParsingError(f"No block start marker '{block_marker}' found in row {marker_row_idx}")
+            raise ParsingError(f"No date column name '{date_col_name}' found in row {marker_row_idx}")
         
         # Create blocks from each start column
         blocks = []
@@ -174,6 +172,33 @@ class ScheduleParser:
             blocks.append((start_col, end_col))
         
         return blocks
+    
+    def _find_data_start_row(self, block_data: pd.DataFrame, marker_row_idx: int) -> int:
+        """
+        Find the first row with valid data after the marker row.
+        
+        Args:
+            block_data: DataFrame containing the block data
+            marker_row_idx: Index of the marker row
+            
+        Returns:
+            Index of the first row with valid data
+        """
+        # Start looking from 2 rows after the marker row (marker row + time row + 1)
+        for row_idx in range(marker_row_idx + 2, len(block_data)):
+            date_str = block_data.iloc[row_idx, 0]  # First column is date
+            if pd.isna(date_str) or not str(date_str).strip():
+                continue
+            
+            try:
+                # Try to parse as date to validate
+                pd.to_datetime(str(date_str), format=self.config["Format"]["Date"])
+                return row_idx
+            except Exception:
+                continue
+        
+        # If no valid data found, return the row after marker + 1
+        return marker_row_idx + 2
     
     def _parse_time_and_duration(self, interval: str) -> Tuple[Optional[str], Optional[str]]:
         """Parse time interval string into start time and duration."""
@@ -216,64 +241,7 @@ class ScheduleParser:
             warnings.warn(f"⚠️  Failed to parse interval: '{interval}'")
             return None, None
 
-    def _parse_block(self, block: pd.DataFrame, block_info: dict) -> pd.DataFrame:
-        """
-        Parse a single block with better meta-information handling.
-        
-        Args:
-            block: DataFrame containing the block data
-            block_info: Dictionary with block metadata (marker_row_idx, start_col, end_col, etc.)
-        """
-        date_col = block.columns[0]
-        dates = block[date_col].iloc[3:].reset_index(drop=True)  # Skip meta rows
-        rows = []
-        
-        # Get time intervals from the row after the block start marker
-        marker_row_idx = block_info['marker_row_idx']
-        time_row_idx = marker_row_idx + 1
-        
-        for col in block.columns[1:]:
-            time_interval = block.iloc[time_row_idx, block.columns.get_loc(col)]
-            if pd.isna(time_interval):
-                continue
 
-            start_time, duration = self._parse_time_and_duration(time_interval)
-            if not (start_time and duration):
-                continue
-
-            # Process team entries, skipping meta rows
-            for i, team_entry in enumerate(block[col].iloc[3:].reset_index(drop=True)):
-                date_str = dates.iloc[i]
-                if pd.isna(date_str) or self._is_meta_row(date_str):
-                    continue
-
-                try:
-                    date_obj = pd.to_datetime(str(date_str), format=self.config["Format"]["Date"])
-                except Exception:
-                    continue
-
-                team_str = str(team_entry).strip() if not pd.isna(team_entry) else ''
-                if not team_str:
-                    if self.config["Missing Values"]["Omit"]:
-                        continue
-                    team_list = [self.config["Missing Values"]["Replacement"]]
-                else:
-                    if self.config["Split"]["Skip"]:
-                        team_list = [team_str]
-                    else:
-                        team_list = [t.strip() for t in re.split(rf"{re.escape(self.config['Split']['Separator'])}", team_str) if t.strip()]
-
-                for team in team_list:
-                    rows.append({
-                        "Week": (date_obj - self.reference_date).days // 7,
-                        "Day": date_obj.strftime("%A"),
-                        "Date": date_obj.strftime(self.config["Format"]["Date"]),
-                        "Start Time": start_time,
-                        "Duration": duration,
-                        "Team": team
-                    })
-
-        return pd.DataFrame(rows)
 
     def parse(self) -> pd.DataFrame:
         """
@@ -295,48 +263,81 @@ class ScheduleParser:
             raise FileError(f"Error reading schedule file: {e}")
         
         try:
-            # Find block boundaries using configurable marker
+            # Find block boundaries using configurable date column name
             block_boundaries = self._find_block_boundaries()
             
             if not block_boundaries:
                 raise ParsingError("No valid blocks found in schedule data")
 
             # Find the marker row index
-            block_marker = self.block_start_marker or self.config["Block Detection"]["start_marker"]
+            date_col_name = self.date_column_name or self.config["Block Detection"]["date_column_name"]
             marker_row_idx = None
             for row_idx, row in self.df.iterrows():
                 first_col_value = str(row.iloc[0]).strip().lower()
-                if first_col_value == block_marker.lower():
+                if first_col_value == date_col_name.lower():
                     marker_row_idx = row_idx
                     break
 
-            blocks = []
+            # Process all blocks in a single loop
+            all_rows = []
             for start_col, end_col in block_boundaries:
-                # Extract the block data - these are column indices
-                subset = self.df.iloc[:, start_col:end_col].copy()
+                # Extract the block data
+                block_data = self.df.iloc[:, start_col:end_col].copy()
                 
-                # Filter out rows that don't have data in the first column
-                mask = pd.Series(True, index=subset.index)
-                mask[3:] = pd.notna(subset.iloc[3:, 0])
-                subset = subset[mask]
+                # Find the first row with valid data after the marker row
+                data_start_row = self._find_data_start_row(block_data, marker_row_idx)
                 
-                block_info = {
-                    'marker_row_idx': marker_row_idx,
-                    'start_col': start_col,
-                    'end_col': end_col
-                }
-                blocks.append((subset, block_info))
+                # Get time intervals from the row after the marker row
+                time_row_idx = marker_row_idx + 1
+                
+                # Process each column in the block
+                for col_idx in range(1, len(block_data.columns)):  # Skip date column
+                    time_interval = block_data.iloc[time_row_idx, col_idx]
+                    if pd.isna(time_interval):
+                        continue
 
-            dfs = []
-            for block, block_info in blocks:
-                parsed_block = self._parse_block(block, block_info)
-                if not parsed_block.empty:
-                    dfs.append(parsed_block)
+                    start_time, duration = self._parse_time_and_duration(time_interval)
+                    if not (start_time and duration):
+                        continue
 
-            if not dfs:
+                    # Process team entries starting from data_start_row
+                    for row_idx in range(data_start_row, len(block_data)):
+                        date_str = block_data.iloc[row_idx, 0]  # First column is date
+                        if pd.isna(date_str) or not str(date_str).strip():
+                            continue
+
+                        try:
+                            date_obj = pd.to_datetime(str(date_str), format=self.config["Format"]["Date"])
+                        except Exception:
+                            # Skip rows that don't have valid dates
+                            continue
+
+                        team_entry = block_data.iloc[row_idx, col_idx]
+                        team_str = str(team_entry).strip() if not pd.isna(team_entry) else ''
+                        if not team_str:
+                            if self.config["Missing Values"]["Omit"]:
+                                continue
+                            team_list = [self.config["Missing Values"]["Replacement"]]
+                        else:
+                            if self.config["Split"]["Skip"]:
+                                team_list = [team_str]
+                            else:
+                                team_list = [t.strip() for t in re.split(rf"{re.escape(self.config['Split']['Separator'])}", team_str) if t.strip()]
+
+                        for team in team_list:
+                            all_rows.append({
+                                "Week": (date_obj - self.reference_date).days // 7,
+                                "Day": date_obj.strftime("%A"),
+                                "Date": date_obj.strftime(self.config["Format"]["Date"]),
+                                "Start Time": start_time,
+                                "Duration": duration,
+                                "Team": team
+                            })
+
+            if not all_rows:
                 return pd.DataFrame()
 
-            result = pd.concat(dfs, ignore_index=True)
+            result = pd.DataFrame(all_rows)
             result["Date"] = pd.to_datetime(result["Date"], format=self.config["Format"]["Date"])
             result = result.sort_values(["Date", "Start Time"]).reset_index(drop=True)
             result["Date"] = result["Date"].dt.strftime(self.config["Format"]["Date"])

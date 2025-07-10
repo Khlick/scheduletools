@@ -78,8 +78,8 @@ expanded_data = expander.expand()
 # Parse a schedule file with default block marker
 schtool parse schedule.txt -o parsed_schedule.csv
 
-# Parse with custom block marker
-schtool parse schedule.txt --block-marker "Day" -o parsed_schedule.csv
+# Parse with custom date column name
+schtool parse schedule.txt --date-column "Day" -o parsed_schedule.csv
 
 # Split by team
 schtool split parsed_schedule.csv -g Team -o team_schedules/
@@ -100,12 +100,12 @@ Parse schedule data from various formats into structured DataFrames.
 ```python
 from scheduletools import ScheduleParser
 
-# Basic usage with default block marker ("Date")
+# Basic usage with default date column name ("Date")
 parser = ScheduleParser("schedule.txt")
 df = parser.parse()
 
-# With custom block marker
-parser = ScheduleParser("schedule.txt", block_start_marker="Day")
+# With custom date column name
+parser = ScheduleParser("schedule.txt", date_column_name="Day")
 df = parser.parse()
 
 # With custom configuration
@@ -113,7 +113,7 @@ parser = ScheduleParser(
     "schedule.txt",
     config_path="config.json",
     reference_date="2025-09-02",
-    block_start_marker="Day"
+    date_column_name="Day"
 )
 df = parser.parse()
 ```
@@ -127,9 +127,7 @@ df = parser.parse()
         "Duration": "H:MM"
     },
     "Block Detection": {
-        "start_marker": "Date",
-        "skip_meta_rows": true,
-        "meta_patterns": ["ice", "time", "header", "day", "week", "note", "info"]
+        "date_column_name": "Date"
     },
     "Missing Values": {
         "Omit": true,
@@ -143,11 +141,7 @@ df = parser.parse()
 ```
 
 **Block Detection:**
-The parser uses a configurable block marker to identify where schedule blocks begin. By default, it looks for "Date" in the first column of each row. You can customize this behavior:
-
-- **`start_marker`**: Text that indicates the start of a block column (default: "Date")
-- **`skip_meta_rows`**: Whether to skip rows containing meta-information
-- **`meta_patterns`**: List of patterns to identify meta-information rows
+The parser uses a configurable date column name to identify where schedule blocks begin. The `date_column_name` specifies the name of the date column (which is always the first column in each block). By default, it looks for "Date" in the first column of each row. When parsing blocks, rows without valid dates in the date column are automatically skipped.
 
 ### CSVSplitter
 
@@ -204,9 +198,7 @@ ScheduleParser supports flexible configuration through config objects or JSON fi
 - `Duration`: Duration format (default: `"H:MM"`)
 
 ### Block Detection
-- `start_marker`: Text marker for block identification (default: `"Date"`)
-- `skip_meta_rows`: Whether to skip metadata rows (default: `True`)
-- `meta_patterns`: Patterns to identify metadata rows
+- `date_column_name`: Name of the date column that indicates the start of a block (default: `"Date"`)
 
 ### Missing Values
 - `Omit`: Whether to omit missing values (default: `True`)
@@ -226,9 +218,7 @@ ScheduleParser supports flexible configuration through config objects or JSON fi
         "Duration": "H:MM"
     },
     "Block Detection": {
-        "start_marker": "Date",
-        "skip_meta_rows": true,
-        "meta_patterns": ["ice", "time", "header", "day", "week", "note", "info"]
+        "date_column_name": "Date"
     },
     "Missing Values": {
         "Omit": true,
@@ -250,6 +240,15 @@ ScheduleParser supports flexible configuration through config objects or JSON fi
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### 0.3.0
+- **Improved Field Naming**: Changed `start_marker` to `date_column_name` for better clarity
+- **Dynamic Data Detection**: Replaced hard-coded row indices with automatic detection of where data starts
+- **Optimized Parsing**: Combined block extraction and processing into a single efficient loop
+- **Simplified Block Detection**: Removed meta pattern checking and `skip_meta_rows` configuration
+- **Date-Only Validation**: Now only validates that the date column contains valid dates, automatically skipping invalid rows
+- **Cleaner Configuration**: Simplified Block Detection section to only include `date_column_name`
+- **Updated Documentation**: Clarified that `date_column_name` specifies the date column name
 
 ### 0.2.0
 - **Enhanced Configuration System**: Added support for passing config objects directly to ScheduleParser

@@ -47,11 +47,11 @@ def main():
               help="Output CSV path. If not specified, prints to stdout.")
 @click.option("--reference-date", default="2025-09-02", 
               help="Reference date for week calculations (default: 2025-09-02)")
-@click.option("--block-marker", default="Date",
-              help="Text marker that indicates the start of a block column (default: Date)")
+@click.option("--date-column", default="Date",
+              help="Name of the date column that indicates the start of a block (default: Date)")
 @handle_errors
 def parse(schedule: Path, config: Optional[Path], output: Optional[Path], 
-          reference_date: str, block_marker: str):
+          reference_date: str, date_column: str):
     """Parse a schedule file into structured CSV format.
     
     SCHEDULE: Path to the input schedule file (tab-delimited format)
@@ -67,7 +67,7 @@ def parse(schedule: Path, config: Optional[Path], output: Optional[Path],
         schedule, 
         config_path=config,
         reference_date=reference_date,
-        block_start_marker=block_marker,
+        date_column_name=date_column,
         config=config_data
     )
     
@@ -76,7 +76,7 @@ def parse(schedule: Path, config: Optional[Path], output: Optional[Path],
     
     if result.empty:
         click.echo("⚠️  No data parsed from schedule file")
-        return 1
+        return
     
     # Output results
     if output:
@@ -87,8 +87,6 @@ def parse(schedule: Path, config: Optional[Path], output: Optional[Path],
     else:
         click.echo("Parsed Schedule:")
         click.echo(result.to_string(index=False))
-    
-    return 0
 
 
 @main.command()
